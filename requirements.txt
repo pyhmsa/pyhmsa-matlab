@@ -1,0 +1,4 @@
+pyhmsa
+scipy
+nose
+coverage
