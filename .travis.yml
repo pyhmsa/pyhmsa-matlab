@@ -1,25 +1,55 @@
 sudo: false
+
 language: python
+
 cache:
   directories:
   - $HOME/.pip-cache/
+
 matrix:
   include:
     - python: "3.5"
-      env: DEPLOY=yes
+      env: BUILD=conda DEPLOY=yes
       os: linux
     - python: "2.7"
-      env: DEPLOY=no
+      env: BUILD=conda DEPLOY=no
       os: linux
+
 install:
-- pip install --cache-dir $HOME/.pip-cache --upgrade pip codecov
-- pip install --cache-dir $HOME/.pip-cache --upgrade -r requirements.txt
+- if [[ "$BUILD" == "conda" ]]; then
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    bash miniconda.sh -b -f -p $HOME/miniconda;
+    export PATH="$HOME/miniconda/bin:$PATH";
+    hash -r;
+    conda config --set always_yes yes --set changeps1 no;
+    conda update -q conda;
+    conda install -n root _license;
+    conda create -q -n testenv python=$TRAVIS_PYTHON_VERSION;
+    source activate testenv;
+  fi
+  
+- export REQUIREMENTS=`cat requirements.txt | tr '\n' ' '`
+- echo $REQUIREMENTS;
+
+- if [[ "$BUILD" == "conda" ]]; then
+    export REQUIREMENTS=`echo $REQUIREMENTS | sed 's/pyhmsa//g'`;
+    conda install $REQUIREMENTS;
+    pip install pyhmsa codecov;
+  elif [[ "$BUILD" == "pip" ]]; then
+    pip install --cache-dir $HOME/.pip-cache --upgrade pip codecov $REQUIREMENTS;
+  fi
+  
 - python setup.py develop
+
 script:
 - nosetests
-after_success: codecov
+
+after_success:
+- codecov
+
 notifications:
   email: false
+
 deploy:
   - provider: pypi
     user: philippe.pinard
