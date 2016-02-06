@@ -14,7 +14,7 @@ import versioneer
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the relevant file
-with open('README.rst', encoding='utf-8') as f:
+with open('README.rst', 'r') as f:
     long_description = f.read()
 
 setup(name='pyHMSA-matlab',
